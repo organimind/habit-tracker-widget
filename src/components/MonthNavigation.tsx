@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Settings } from 'lucide-react';
 import type { MonthYear } from '../types/habit';
 import { getMonthName } from '../utils/dateUtils';
 
@@ -19,6 +19,11 @@ export const MonthNavigation: React.FC<MonthNavigationProps> = ({
   onGoToToday,
 }) => {
   const monthName = getMonthName(currentView.month);
+
+  // Hide settings icon inside any preview window (iframe) or preview mode
+  const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideSettings = isIframe || searchParams.get('hideSettings') === 'true' || searchParams.get('preview') === 'true';
 
   return (
     <div className="month-nav-container">
@@ -58,6 +63,19 @@ export const MonthNavigation: React.FC<MonthNavigationProps> = ({
           >
             <ChevronRight size={16} />
           </button>
+
+          {!hideSettings && (
+            <a
+              href="/habit-tracker-widget/customize"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-btn icon-btn settings-btn"
+              title="OrganiMind Settings & Customization"
+              aria-label="OrganiMind Settings"
+            >
+              <Settings size={15} />
+            </a>
+          )}
         </div>
       </div>
 
@@ -120,16 +138,12 @@ export const MonthNavigation: React.FC<MonthNavigationProps> = ({
           gap: 0.35rem;
           padding: 0.35rem 0.6rem;
           height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-app);
-          border: 1px solid var(--border-light);
           color: var(--text-secondary);
           font-weight: 600;
           font-size: 0.78rem;
           cursor: pointer;
         }
         .nav-btn:hover {
-          background: var(--bg-hover, rgba(0, 0, 0, 0.04));
           color: var(--text-primary);
         }
         .theme-customizer-btn {
@@ -146,6 +160,13 @@ export const MonthNavigation: React.FC<MonthNavigationProps> = ({
         .icon-btn {
           width: 32px;
           padding: 0;
+        }
+        .settings-btn {
+          color: var(--text-secondary);
+          text-decoration: none;
+        }
+        .settings-btn:hover {
+          color: var(--border-focus);
         }
         .today-btn {
           padding: 0.35rem 0.75rem;

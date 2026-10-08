@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useHabitTracker } from './hooks/useHabitTracker';
 import { MonthNavigation } from './components/MonthNavigation';
 import { HabitGrid } from './components/HabitGrid';
+import { CustomizePage } from './pages/CustomizePage';
 import type { ThemeColors } from './types/habit';
 import {
   loadThemeFromURLOrStorage,
@@ -11,6 +12,33 @@ import {
 } from './utils/themeStorage';
 
 export const App: React.FC = () => {
+  const [isCustomize, setIsCustomize] = useState(() => {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    return path.endsWith('/customize') || path.endsWith('/customize/') || hash.includes('customize');
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      setIsCustomize(path.endsWith('/customize') || path.endsWith('/customize/') || hash.includes('customize'));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (isCustomize) {
+      document.documentElement.classList.add('customize-mode');
+      document.body.classList.add('customize-mode');
+    } else {
+      document.documentElement.classList.remove('customize-mode');
+      document.body.classList.remove('customize-mode');
+    }
+  }, [isCustomize]);
+
   const [theme, setTheme] = useState<ThemeColors>(loadThemeFromURLOrStorage);
 
   const {
@@ -32,21 +60,23 @@ export const App: React.FC = () => {
 
   // Dynamically apply user's custom color choices to CSS root variables & sync with URL
   useEffect(() => {
-    saveCustomTheme(theme);
-    updateURLWithTheme(theme);
+    if (!isCustomize) {
+      saveCustomTheme(theme);
+      updateURLWithTheme(theme);
 
-    const root = document.documentElement;
-    root.style.setProperty('--bg-app', theme.bgApp);
-    root.style.setProperty('--bg-card', theme.bgCard);
-    root.style.setProperty('--text-primary', theme.textPrimary);
-    root.style.setProperty('--text-secondary', theme.textSecondary);
-    root.style.setProperty('--header-bg', theme.headerBg);
-    root.style.setProperty('--sticky-col-bg', theme.stickyColBg || theme.bgCard);
-    root.style.setProperty('--border-light', theme.borderColor);
-    root.style.setProperty('--checkbox-border', theme.checkboxBorder);
-    root.style.setProperty('--checkbox-check-color', theme.checkboxCheckColor);
-    root.style.setProperty('--border-focus', theme.checkboxCheckColor);
-  }, [theme]);
+      const root = document.documentElement;
+      root.style.setProperty('--bg-app', theme.bgApp);
+      root.style.setProperty('--bg-card', theme.bgCard);
+      root.style.setProperty('--text-primary', theme.textPrimary);
+      root.style.setProperty('--text-secondary', theme.textSecondary);
+      root.style.setProperty('--header-bg', theme.headerBg);
+      root.style.setProperty('--sticky-col-bg', theme.stickyColBg || theme.bgCard);
+      root.style.setProperty('--border-light', theme.borderColor);
+      root.style.setProperty('--checkbox-border', theme.checkboxBorder);
+      root.style.setProperty('--checkbox-check-color', theme.checkboxCheckColor);
+      root.style.setProperty('--border-focus', theme.checkboxCheckColor);
+    }
+  }, [theme, isCustomize]);
 
   // Listen for iframe postMessage or URL changes from host website (OrganiMind)
   useEffect(() => {
@@ -55,6 +85,10 @@ export const App: React.FC = () => {
     });
     return unsubscribe;
   }, []);
+
+  if (isCustomize) {
+    return <CustomizePage />;
+  }
 
   return (
     <div className="widget-container">
