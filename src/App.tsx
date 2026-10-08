@@ -11,22 +11,26 @@ import {
   listenToExternalThemeChanges,
 } from './utils/themeStorage';
 
+const checkIsCustomize = (): boolean => {
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  return path.includes('customize') || hash.includes('customize');
+};
+
 export const App: React.FC = () => {
-  const [isCustomize, setIsCustomize] = useState(() => {
-    const path = window.location.pathname.toLowerCase();
-    const hash = window.location.hash.toLowerCase();
-    return path.endsWith('/customize') || path.endsWith('/customize/') || hash.includes('customize');
-  });
+  const [isCustomize, setIsCustomize] = useState(checkIsCustomize);
 
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      setIsCustomize(path.endsWith('/customize') || path.endsWith('/customize/') || hash.includes('customize'));
+    const handleLocationChange = () => {
+      setIsCustomize(checkIsCustomize());
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
   useEffect(() => {
